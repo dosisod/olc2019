@@ -1,0 +1,44 @@
+* {
+	font-family: monospace, monospace;
+	text-decoration: none;
+	text-align: center;
+}
+
+html, body {
+	padding: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	background: #1a1a1a;
+	color: white;
+}
+
+ol {
+	list-style-type: none;
+}
+
+#startup {
+	font-size: 2.5vw;
+}
+
+#bottom {
+	width: 100%;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+}
+
+#input {
+	width: 100%;
+	margin-top: 5px;
+	font-size: 3em;
+	box-sizing: border-box;
+	border: none;
+	vertical-align: middle;
+	background: #80ff80;
+	color: #404040;
+}
+
+.tf {
+	color: #ffb3ff;
+}
