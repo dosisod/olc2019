@@ -55,16 +55,15 @@ function string(str) { //turns given string into a string element
 }
 
 function init() {
-	done=[]
-	ans=[]
+	ans=new Array(100)
 
 	for (i=0;i<100;i++) {
 		tmp=generate(i)
-		done.push(tmp[0])
-		ans.push(tmp[1])
+		ans[99-i]=tmp[1]
 
 		li=document.createElement("li")
-		li.innerHTML=done[i]
+		li.innerHTML=tmp[0]
+		li.id="_"+(99-i)
 		document.getElementById("exprs").appendChild(li)
 	}
 }
@@ -111,7 +110,7 @@ function generate(lvl) {
 }
 
 function compile(str) {
-	tmp=new Function("return !!"+str)
+	tmp=new Function("return "+str)
 	return !!tmp()
 }
 
