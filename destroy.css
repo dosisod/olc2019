@@ -23,6 +23,11 @@ html, body {
 }
 
 #exprs {
+	width: 100%;
+	padding: 0;
+	position: absolute;
+	left: 0;
+	bottom: 50%;
 	list-style-type: none;
 }
 
@@ -50,4 +55,8 @@ html, body {
 
 .tf {
 	color: #ffb3ff;
+}
+
+.str {
+	color:#ff9;
 }
