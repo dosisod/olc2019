@@ -1,3 +1,6 @@
+//where the player is at (from 0-99)
+var at=0
+
 var tfs=[
 	"true",
 	"false",
@@ -7,12 +10,14 @@ var tfs=[
 	"1"
 ]
 
+//operations that are able to be put at the start of a statement
 var starts=[
 	"",
 	"!",
 	"!!"
 ]
 
+//operations
 var ops=[
 	"&&",
 	"||",
@@ -62,10 +67,13 @@ function init() {
 		ans[99-i]=tmp[1]
 
 		li=document.createElement("li")
+		li.classList.add("hide")
 		li.innerHTML=tmp[0]
 		li.id="_"+(99-i)
 		document.getElementById("exprs").appendChild(li)
 	}
+	document.getElementById("_0").classList.remove("hide")
+	document.getElementById("_0").classList.add("current")
 }
 
 function generate(lvl) {
@@ -76,7 +84,7 @@ function generate(lvl) {
 		html=bool_(true)+"=="+bool_(true)
 		raw="true"
 	}
-	else if (0<lvl&&lvl<=15) {
+	else if (0<lvl&&lvl<=10) {
 		tmp=randarr(starts)
 		html+=auto(tmp)
 		raw+=tmp
@@ -85,7 +93,7 @@ function generate(lvl) {
 		html+=auto(tmp)
 		raw+=tmp
 	}
-	else if (15<lvl&&lvl<30) {
+	else if (10<lvl&&lvl<30) {
 		tmp=randarr(starts)
 		html+=auto(tmp)
 		raw+=tmp
@@ -115,9 +123,21 @@ function compile(str) {
 }
 
 function check(e) {
-	console.log(e)
+	//only continue if enter was pressed
+	if (e.key!="Enter") return
+
+	input=document.getElementById("input").value.toLowerCase()
+	if (input!="true"&&input!="false") gameover()
+
+	if ((""+ans[at])!=input) gameover()
+
+	document.getElementById("_"+at).remove()
+	document.getElementById("_"+(at+1)).classList.remove("hide")
+	document.getElementById("_"+(at+1)).classList.add("current")
+	document.getElementById("input").value=""
+	at++
 }
 
-window.onload=function () {
+window.onload=function() {
 	init()
 }
