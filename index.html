@@ -8,13 +8,21 @@
 </head>
 <body>
 <pre>
+
 <div id="timer"></div>
+
+<div id="gameover" class="gameover">
+<h1 id="msg">Game Over!</h1>
+<h3 id="score">Score: </h3>
+<h3 id="cod">Destroyed by: </h3>
+<h4><a href="#" onclick="window.location.reload()">Play Again</a></h4>
+</div>
 
 <ol id="exprs"></ol>
 
 <div id="bottom">
 <span id="startup">Destroy each expression by evaluating them as <span class="tf">true</span> or <span class="tf">false</span></span>
-<input id="input" onkeydown=check(event)></input>
+<input id="input" onkeydown=check(event) placeholder="true"></input>
 </div>
 
 </pre>
