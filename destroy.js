@@ -1,41 +1,42 @@
-//where the player is at (from 0-49)
-var at=0
+const MAX_LVL=50
+var currentLvl=0
 
-//current time elapsed
-var active=false
-var reset=false
-var timer_interval=null
-var timer_start=0
-var timer_now=0
+var isActive=false
+var isDead=false
+var gameTimer=undefined
+var timerStart=0
 
-var tfs=[
+const easyExpressions=[
 	"true",
 	"false",
 	"\"\"",
 	"\"hello\"",
 	"0",
 	"1",
-	"[]"
+	"[]",
+	"null",
+	"undefined"
 ]
 
-var tfs2=[
-	"([1,2,3].indexOf(5)>0)",
-	"([1,2,3].indexOf(2)>0)",
-	"(\"x\".startsWith(\"x\")==true)",
-	"(\"x\".startsWith(\"y\")==true)"
+const harderExpressions=[
+	"(1 in [1,2,3])",
+	"(5 in [1,2,3])",
+	"(\"x\".startsWith(\"x\"))",
+	"(\"x\".startsWith(\"y\"))"
 ]
 
-var both=[...tfs, ...tfs2]
+const allExpressions=[
+	...easyExpressions,
+	...harderExpressions
+]
 
-//operations that are able to be put at the start of a statement
-var starts=[
+const inversionExpressions=[
 	"",
 	"!",
 	"!!"
 ]
 
-//operations
-var ops=[
+const bitwiseOperations=[
 	"&&",
 	"||",
 	"^",
@@ -43,193 +44,196 @@ var ops=[
 	"=="
 ]
 
-function randarr(arr) { //given an arry, select a random element
-	return arr[~~(Math.random()*arr.length)]
+function getRandom(arr) {
+	return arr[~~(
+		Math.random() * arr.length
+	)]
 }
 
-function bool_(b) {
-	if (b) {
+function colorize(obj) {
+	if (typeof obj==="string") {
+		if (obj.startsWith("\"") && obj!="false" && obj!="true") {
+			return colorizeString(obj)
+		}
+	}
+	if (typeof obj==="boolean") {
+		return colorizeBool(obj)
+	}
+	else if (easyExpressions.indexOf(obj) > -1) {
+		return colorizeBool(obj)
+	}
+	else {
+		return obj
+	}
+}
+
+function colorizeBool(bool) {
+	if (bool===false || bool==="false") {
+		return "<span class='tf'>false</span>"
+	}
+	else if (bool===true || bool==="true") {
 		return "<span class='tf'>true</span>"
 	}
 	else {
-		return "<span class='tf'>false</span>"
+		return "<span class'tf'>"+bool+"</span>"
 	}
 }
 
-function auto(str) {
-	if (str.startsWith("\"")) {
-		return string(str)
-	}
-	else if (str=="true") {
-		return bool_(true)
-	}
-	else if (str=="false") {
-		return bool_(false)
-	}
-	else {
-		return str
-	}
-}
-
-function string(str) { //turns given string into a string element
+function colorizeString(str) {
 	return "<span class='str'>"+str+"</span>"
 }
 
-function init() {
-	ans=new Array(100)
+function generateLvl(lvl) {
+	lvl=MAX_LVL - 1 - lvl
 
-	for (i=0;i<50;i++) {
-		tmp=generate(i)
-		ans[49-i]=tmp[1]
-
-		li=document.createElement("li")
-		li.classList.add("hide")
-		li.innerHTML=tmp[0]
-		li.id="_"+(49-i)
-		document.getElementById("exprs").appendChild(li)
-	}
-	document.getElementById("_0").classList.remove("hide")
-	document.getElementById("_0").classList.add("current")
-}
-
-function generate(lvl) {
-	lvl=49-lvl
-	raw="" //stores raw text to be sent to compiler
-	html=""
 	if (lvl==0) {
-		html=bool_(true)+"=="+bool_(true)
-		raw="true"
+		return [
+			colorizeBool(true)+"=="+colorizeBool(true),
+			true
+		]
 	}
-	else if (0<lvl&&lvl<=10) {
-		tmp=randarr(starts)
-		html+=auto(tmp)
-		raw+=tmp
-
-		tmp=randarr(both)
-		html+=auto(tmp)
-		raw+=tmp
+	else if (0 < lvl && lvl <= 10) {
+		return randomlyCombine([
+			inversionExpressions,
+			allExpressions
+		])
 	}
-	else if (10<lvl&&lvl<=30) {
-		tmp=randarr(starts)
-		html+=auto(tmp)
-		raw+=tmp
-
-		tmp=randarr(tfs)
-		html+=auto(tmp)
-		raw+=tmp
-		
-		tmp=randarr(ops)
-		html+=auto(tmp)
-		raw+=tmp
-
-		tmp=randarr(tfs)
-		html+=auto(tmp)
-		raw+=tmp
+	else if (10 < lvl && lvl <= 30) {
+		return randomlyCombine([
+			inversionExpressions,
+			easyExpressions,
+			bitwiseOperations,
+			easyExpressions
+		])
 	}
-	else if (30<lvl&&lvl<=50) {
-		tmp=randarr(tfs)
-		html+=auto(tmp)
-		raw+=tmp
-		
-		tmp=randarr(ops)
-		html+=auto(tmp)
-		raw+=tmp
-
-		tmp=randarr(tfs)
-		html+=auto(tmp)
-		raw+=tmp
-
-		tmp=randarr(ops)
-		html+=auto(tmp)
-		raw+=tmp
-
-		tmp=randarr(tfs)
-		html+=auto(tmp)
-		raw+=tmp
+	else if (30 < lvl && lvl <= MAX_LVL) {
+		return randomlyCombine([
+			easyExpressions,
+			bitwiseOperations,
+			easyExpressions,
+			bitwiseOperations,
+			easyExpressions
+		])
 	}
-	return [ html, compile(raw) ]
 }
 
-function compile(str) {
-	tmp=new Function("return !!"+str)
-	return !!tmp()
+function randomlyCombine(arrays) {
+	var html=""
+	var raw=""
+
+	for (const array of arrays) {
+		const random=getRandom(array)
+		html+=colorize(random)
+		raw+=random
+	}
+
+	return [ html, evaluate(raw) ]
+}
+
+function evaluate(expression) {
+	return !!(new Function(
+		"return !!"+expression
+	))()
 }
 
 function check(e) {
-	//only continue if enter was pressed
-	if (e.key!="Enter") return
+	if (e.key!="Enter" || isDead) return
 
-	if (at>=49) {
+	if (currentLvl == MAX_LVL - 1) {
 		win()
 		return
 	}
 
-	active=true
+	isActive=true
+	isDead=false
 
-	if (at==0) document.getElementById("startup").remove()
+	if (currentLvl==0) {
+		getId("startup").remove()
+	}
 
-	input=document.getElementById("input").value.toLowerCase()
-	if (input!="true"&&input!="false") return
+	const input=getId("input").value.toLowerCase()
+	if (input!="true" && input!="false") return
 
-	if ((""+ans[at])!=input) {
+	if ((""+answers[currentLvl]) != input) {
 		gameover()
 		return
 	}
 
-	//everything worked, remove and reset things
-	timer_start=Date.now()
-	clearInterval(timer_interval)
+	timerStart=Date.now()
+	clearInterval(gameTimer)
 
-	timer_interval=setInterval(function() {
-		//after 10 seconds, run gameover function
+	gameTimer=setInterval(function() {
 		gameover()
 		return
 	}, 10000)
 
-	document.getElementById("_"+at).remove()
-	document.getElementById("_"+(at+1)).classList.remove("hide")
-	document.getElementById("_"+(at+1)).classList.add("current")
-	document.getElementById("input").value=""
-	at++
+	getId("lvl_"+ currentLvl).remove()
+	getId("lvl_"+(currentLvl + 1)).classList.remove("hide")
+	getId("lvl_"+(currentLvl + 1)).classList.add("current")
+	getId("input").value=""
+	currentLvl++
 }
 
 function win() {
-	active=false
-	clearInterval(timer_interval)
+	isDead=true
+	isActive=false
+	clearInterval(gameTimer)
 
-	document.getElementById("cod").innerHTML=""
+	getId("cod").innerHTML=""
 
-	document.getElementById("exprs").innerHTML=""
-	document.getElementById("timer").style.width="0%"
+	getId("expressions").innerHTML=""
+	getId("timer").style.width="0%"
 	document.body.style.background="white"
 
-	document.getElementById("score").innerText+="100%"
-	document.getElementById("msg").innerText="You Win!"
+	getId("score").innerText+="100%"
+	getId("msg").innerText="You Win!"
 
-	document.getElementById("gameover").classList.remove("gameover")
+	getId("gameover").classList.remove("gameover")
 }
 
 function gameover() {
-	active=false //stop timer
-	clearInterval(timer_interval)
+	isDead=true
+	isActive=false
+	clearInterval(gameTimer)
 
-	document.getElementById("cod").innerText+=document.getElementById("_"+at).innerText
+	getId("cod").innerText+=getId("lvl_"+currentLvl).innerText
 
-	document.getElementById("exprs").innerHTML=""
-	document.getElementById("timer").style.width="0%"
+	getId("expressions").innerHTML=""
+	getId("timer").style.width="0%"
 	document.body.style.background="white"
 
-	document.getElementById("score").innerText+=(at*2)+"%"
-	document.getElementById("gameover").classList.remove("gameover")
+	getId("score").innerText+=~~(currentLvl / MAX_LVL * 100)+"%"
+	getId("gameover").classList.remove("gameover")
+}
+
+function setupGame() {
+	answers=new Array(100)
+
+	for (let lvl=0; lvl<MAX_LVL; lvl++) {
+		const tmp=generateLvl(lvl)
+		answers[MAX_LVL - 1 - lvl]=tmp[1]
+
+		const li=document.createElement("li")
+		li.classList.add("hide")
+		li.innerHTML=tmp[0]
+		li.id="lvl_" + (MAX_LVL - 1 - lvl)
+		getId("expressions").appendChild(li)
+	}
+	getId("lvl_0").classList.remove("hide")
+	getId("lvl_0").classList.add("current")
 }
 
 window.onload=function() {
-	init()
+	setupGame()
 
 	setInterval(function() {
-		if (active) {
-			percent=((Date.now()-timer_start)%10000)/100
-			document.getElementById("timer").style.width=percent+"%"
+		if (isActive) {
+			percent=((Date.now()-timerStart)%10000)/100
+			getId("timer").style.width=percent+"%"
 		}
 	}, 100)
+}
+
+function getId(id) {
+	return document.getElementById(id)
 }
